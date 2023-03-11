@@ -365,7 +365,7 @@ class Agent():
         Z = sum(d_marg.values())
         for y in d_marg.keys():
             d_marg[y] /= Z
-            
+
         return d_marg
 
     def Q_A(self,d_marginal,env):
@@ -389,6 +389,14 @@ class Agent():
         '''
         d_act = {}
         # TODO 
+        # Iterate over all possible actions
+        for a in env.A:
+            # Compute the expected reward for the action
+            E_rwd = sum(env.rwd(a, s) * d_marginal[s] for s in d_marginal.keys())
+            # Add the expected reward to the dictionary
+            if E_rwd > 0.0:
+                d_act[a] = E_rwd
+
         return d_act
 
     def act(self,d_Q):
