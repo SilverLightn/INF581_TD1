@@ -417,6 +417,9 @@ class Agent():
         if len(d_Q) <= 0:
             return 0,0
         # TODO 
+        a_star = max(d_Q, key=d_Q.get)
+        # Return the best action and its associated Q-value
+        return a_star, d_Q[a_star]
 
 def print_pmf(d,label="p(V = v) |  v"):
     ''' Pretty printing of dictionaries '''
