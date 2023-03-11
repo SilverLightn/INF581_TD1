@@ -353,6 +353,19 @@ class Agent():
         
         d_marg = {}
         # TODO 
+        # Iterate over all possible final states
+        for y in self.env.Y:
+            # Compute the marginal probability of the final state
+            P_Yx = sum(d_joint[path] for path in d_joint.keys() if path[-1] == str(y))
+            # Add the probability to the dictionary
+            if P_Yx > 0.0:
+                d_marg[y] = P_Yx
+
+        # Normalize the probabilities by dividing each by the sum of all probabilities
+        Z = sum(d_marg.values())
+        for y in d_marg.keys():
+            d_marg[y] /= Z
+            
         return d_marg
 
     def Q_A(self,d_marginal,env):
