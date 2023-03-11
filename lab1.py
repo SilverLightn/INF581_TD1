@@ -1,3 +1,4 @@
+import itertools
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap, LinearSegmentedColormap
@@ -5,8 +6,8 @@ import matplotlib.patches as mpatches
 
 info = {
         # TODO replace the following with your own
-        'Email' : 'roman.klypa@polytechnique.edu',
-        'Alias' : 'RomanK', # optional
+        'Email' : 'anton.chumakov@polytechnique.edu',
+        'Alias' : 'Antonchik', # optional
 }
 
 np.random.seed(1)
@@ -266,7 +267,7 @@ class Environment():
 
 def path2str(y):
     ''' Convert list(int) into a string '''
-    return ' '.join(str(e) for e in y)
+    return str(y)
 
 def str2path(y_str):
     ''' Convert string to a list(int) '''
@@ -276,19 +277,6 @@ def str2path(y_str):
 class Agent():
 
     # TODO: Add any more auxilliary functions you might need here 
-    def PXY(self, x, y, env):
-        p = 1.0
-        if x[0] == 1:
-            p = p*env.P_Xy(y)[0]
-        else:
-            p = p*(1-env.P_Xy(y)[0])
-            
-        if x[1] == 1:
-            p = p*env.P_Xy(y)[1]
-        else:
-            p = p*(1-env.P_Xy(y)[1])
-            
-        return p
 
     def P_Ho(self,x,env):
         '''
@@ -318,25 +306,24 @@ class Agent():
 
         d = {}
         # TODO 
-        for t1 in [5, 11]:
-            for t2 in env.P_Yy(t1).keys():
-                for t3 in env.P_Yy(t2).keys():
-                    for t4 in env.P_Yy(t3).keys():
-                        for t5 in env.P_Yy(t4).keys():
-                            
-                            y = list([t1, t2, t3, t4 , t5])
+        P_Y = env.P_Y()
 
-                            P_Yx = env.P_Y()[t1]
-                            
-                            for i in range(1,5):
-                                P_Yx = P_Yx*self.PXY(x[i], y[i], env)*env.P_Yy(y[i-1])[y[i]]
+        # Iterate over all possible paths of length 5 using itertools.product
+        for y in itertools.product(P_Y.keys(), repeat=5):
+            # Compute the joint probability of the path and the observation sequence
+            P_Yx = P_Y[y[0]]
+            for i in range(1, 5):
+                P_Yx *= self.PXY(x[i], y[i], env) * env.P_Yy(y[i-1])[y[i]]
 
-                            if P_Yx > 0.0:
-                                d[path2str(y)] = P_Yx
-                                
-        Z = np.sum(np.array(list(d.values())))
+            # Add the joint probability to the dictionary
+            if P_Yx > 0.0:
+                d[path2str(y)] = P_Yx
+
+        # Normalize the probabilities by dividing each by the sum of all probabilities
+        Z = sum(d.values())
         for s in d.keys():
-            d[s] = d[s] / Z
+            d[s] /= Z
+
         return d
 
     def P_Yo(self,d_joint):
@@ -366,12 +353,6 @@ class Agent():
         
         d_marg = {}
         # TODO 
-        for y5 in range(1,26):
-            prob = 0.0
-            for path in d_joint.keys():
-                if str2path(path)[4] == y5: prob += d_joint[path]
-            if prob > 0: d_marg[y5] = prob
-        
         return d_marg
 
     def Q_A(self,d_marginal,env):
@@ -395,14 +376,6 @@ class Agent():
         '''
         d_act = {}
         # TODO 
-        for a in range(26):
-            exp_rwd = 0.0
-            
-            for y5 in range(1,26):
-                if y5 in d_marginal.keys():
-                    exp_rwd += env.rwd(a, y5)*d_marginal[y5]
-            
-            if exp_rwd > 0: d_act[a] = exp_rwd
         return d_act
 
     def act(self,d_Q):
@@ -423,10 +396,6 @@ class Agent():
         if len(d_Q) <= 0:
             return 0,0
         # TODO 
-        else:
-            a = max(d_Q, key = d_Q.get)
-            return a, d_Q[a]
-        
 
 def print_pmf(d,label="p(V = v) |  v"):
     ''' Pretty printing of dictionaries '''
